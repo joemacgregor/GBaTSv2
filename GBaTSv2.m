@@ -1,7 +1,7 @@
 % GBaTSv2 Greenland likely basal thermal state version 2 analysis.
 % 
 % Joe MacGregor (NASA/GSFC)
-% Last updated: 19 November 2021
+% Last updated: 3 May 2022
 
 clear
 
@@ -14,34 +14,34 @@ thick_filt_ref              = 10; % number of ice thicknesses over which to run 
 plotting                    = false;
 
 % load various variables
-load /Users/jamacgre/Documents/research/matlab/greenland/mat/grl_coast.mat num_coast x_coast y_coast % NSIDC Greenland coastline
-load /Users/jamacgre/Documents/research/matlab/greenland/mat/core_int.mat lat_core lon_core % compiled Greenland ice-core locations
-GBaTSv1                     = load('/Users/jamacgre/Documents/data/mat/bed.mat', 'frac_frozen_filled', 'frac_thawed_filled', 'frac_uncert_filled', 'mask_agree_searise_update', 'mask_likely_filled'); % GBaTSv1 datasets needed
+load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/grl_coast.mat', 'num_coast', 'x_coast', 'y_coast') % NSIDC Greenland coastline
+load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/core_int.mat', 'lat_core', 'lon_core') % compiled Greenland ice-core locations
+GBaTSv1                     = load('/Users/jamacgre/OneDrive - NASA/data/mat/bed.mat', 'frac_frozen_filled', 'frac_thawed_filled', 'frac_uncert_filled', 'mask_agree_searise_update', 'mask_likely_filled'); % GBaTSv1 datasets needed
 
 % basal melt rate inferred from Greenland radiostratigraphy v1
-RAD                         = load('/Users/jamacgre/Documents/research/matlab/greenland/mat/strain_all_9ka_krige.mat', 'melt_bed_grd', 'melt_bed_lo_grd', 'melt_bed_hi_grd'); % basal melt rate grids
-load /Users/jamacgre/Documents/research/matlab/greenland/mat/mask_D1.mat mask_D1 x_D1_ord y_D1_ord % region of applicability of 1-D steady-state radiostratigraphic modeling (D<1)
+RAD                         = load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/strain_all_9ka_krige.mat', 'melt_bed_grd', 'melt_bed_lo_grd', 'melt_bed_hi_grd'); % basal melt rate grids
+load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/mask_D1.mat', 'mask_D1', 'x_D1_ord', 'y_D1_ord'); % region of applicability of 1-D steady-state radiostratigraphic modeling (D<1)
 
 % BedMachine v3, needed for SeaRISE to ISMIP6 comparison
 BM3                         = struct;
-BM3.x                       = 1e-3 .* double(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'x'))'; % projected x, km
-BM3.y                       = 1e-3 .* double(flipud(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'y'))); % projected y, km
-BM3.elev_bed                = rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'bed')); % bed elevation, m
-BM3.elev_bed_uncert         = rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'errbed')); % bed elevation uncertainty, m
-BM3.elev_surf               = double(rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'surface'))); % surface elevation, m
-BM3.mask_gris               = double(rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'mask'))); % ice mask
-BM3.thick                   = double(rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'thickness'))); % ice thickness, m
+BM3.x                       = 1e-3 .* double(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'x'))'; % projected x, km
+BM3.y                       = 1e-3 .* double(flipud(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'y'))); % projected y, km
+BM3.elev_bed                = rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'bed')); % bed elevation, m
+BM3.elev_bed_uncert         = rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'errbed')); % bed elevation uncertainty, m
+BM3.elev_surf               = double(rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'surface'))); % surface elevation, m
+BM3.mask_gris               = double(rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'mask'))); % ice mask
+BM3.thick                   = double(rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2017-09-20.nc', 'thickness'))); % ice thickness, m
 BM3.thick(~BM3.thick)       = NaN; % NaN out zero ice thickness
 
 % BedMachine v4
 BM4                         = struct;
-BM4.x                       = 1e-3 .* double(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'x'))'; % projected x, km
-BM4.y                       = 1e-3 .* double(flipud(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'y'))); % projected y, km
-BM4.elev_bed                = rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'bed')); % bed elevation, m
-BM4.elev_bed_uncert         = rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'errbed')); % bed elevation uncertainty, m
-BM4.elev_surf               = double(rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineG0reenland-2021-04-20.nc', 'surface'))); % surface elevation, m
-BM4.mask_gris               = double(rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'mask'))); % ice mask
-BM4.thick                   = double(rot90(ncread('/Users/jamacgre/Documents/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'thickness'))); % ice thickness, m
+BM4.x                       = 1e-3 .* double(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'x'))'; % projected x, km
+BM4.y                       = 1e-3 .* double(flipud(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'y'))); % projected y, km
+BM4.elev_bed                = rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'bed')); % bed elevation, m
+BM4.elev_bed_uncert         = rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'errbed')); % bed elevation uncertainty, m
+BM4.elev_surf               = double(rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'surface'))); % surface elevation, m
+BM4.mask_gris               = double(rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'mask'))); % ice mask
+BM4.thick                   = double(rot90(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/BedMachine/BedMachineGreenland-2021-04-20.nc', 'thickness'))); % ice thickness, m
 BM4.thick(~BM4.thick)       = NaN; % NaN out zero ice thickness
 
 % simplified masks for whole Greenland maps
@@ -56,18 +56,28 @@ BM4.mask_combo(BM4.mask_combo == 3) ...
 BM4.mask_combo(BM4.mask_combo == 4) ...
                             = 1; % mask_combo includes 0/ocean 1/land 2/ice
 
+% Mouginot 2019 ice-sheet drainage polygon basins, with peripheral ice massess manually removed in QGIS, then rasterized to BM4 grid, took me forever to figure out but got it with SAGA in QGIS
+M19_ice_mask				= readgeoraster('/Users/jamacgre/OneDrive - NASA/data/GreenValley/Greenland_Basins_PS_v1.4.2_simple_raster.tif');
+M19_ice_mask				= flipud(logical(M19_ice_mask));
+
+% now BM4 mask 2=peripheral ice massess and 3=ice sheet (previously 2)
+BM4.mask_combo((BM4.mask_combo == 2) & M19_ice_mask) ...
+							= 3;
+BM4.mask_gris(BM4.mask_combo == 2) ...
+							= false;
+
 % NaN out surface elevation on ocean
 [BM3.elev_surf(~BM4.mask_combo), BM4.elev_surf(~BM4.mask_combo)] ...
                             = deal(NaN);
 
 % MEaSURES multi-year surface speed mosaic, v1
-SM1                         = load('/Users/jamacgre/Documents/research/matlab/greenland/mat/speed_greenland_measures_v1.mat', 'x_grd', 'y_grd', 'speed', 'speed_uncert', 'speed_x', 'speed_y', 'speed_x_uncert', 'speed_y_uncert');
+SM1                         = load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/speed_greenland_measures_v1.mat', 'x_grd', 'y_grd', 'speed', 'speed_uncert', 'speed_x', 'speed_y', 'speed_x_uncert', 'speed_y_uncert');
 mask_gris_SM1               = logical(interp2(BM4.x, BM4.y, BM4.mask_gris, SM1.x_grd, SM1.y_grd, 'nearest'));
 [SM1.speed(~mask_gris_SM1), SM1.speed_uncert(~mask_gris_SM1), SM1.speed_x(~mask_gris_SM1), SM1.speed_y(~mask_gris_SM1), SM1.speed_x_uncert(~mask_gris_SM1), SM1.speed_y_uncert(~mask_gris_SM1)] ...
                             = deal(NaN); % remove NaNs based on BM4 mask
 
 % Mouginot et al. (2019) large-scale drainage basins
-M19                         = shaperead('/Users/jamacgre/Documents/data/GBaTSv2/Greenland_Basins_PS_v1.4.2_simple.shp'); 
+M19                         = shaperead('/Users/jamacgre/OneDrive - NASA/data/GBaTSv2/Greenland_Basins_PS_v1.4.2_simple.shp'); 
 num_M19                     = length(M19);
 for ii = 1:num_M19
     [M19(ii).X, M19(ii).Y]  = deal((1e-3 .* M19(ii).X), (1e-3 .* M19(ii).Y));
@@ -85,7 +95,7 @@ if license('checkout', 'map_toolbox')
     [~, ~, x_paral, y_paral, x_merid, y_merid] ...
                             = graticule_greenland((1e3 .* [x_min x_max]), (1e3 .* [y_min y_max]), 5, 10);
 else
-    load /Users/jamacgre/Documents/research/matlab/greenland/mat/greenland_graticule x_paral y_paral x_merid y_merid
+    load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/greenland_graticule', 'x_paral', 'y_paral', 'x_merid', 'y_merid')
 end
 
 % letters for plots
@@ -96,19 +106,19 @@ letters                     = 'a':'z';
 disp('Load old and new Colgan data archeology, Jordan et al. (2018), Bowling et al. (2019), Panton and Karlsson (2015) and Leysinger-Vieli et al. (2018) data...')
 
 % old Colgan borehole summary first
-S                           = shaperead('/Users/jamacgre/Documents/research/data/greenland/basal_evidence/borehole_freezing.shp');
+S                           = shaperead('/Users/jamacgre/OneDrive - NASA/research/data/greenland/basal_evidence/borehole_freezing.shp');
 [x_borehole_frozen, y_borehole_frozen] ...
                             = deal([S.X], [S.Y]);
 temp_borehole_frozen        = [-11.8 -1.3 -6.0 -11.4 -100 -6.6 -100 -100 -100]; % Table 1 of MacGregor et al. (2016, JGR), used in ISMIP6 plot to colorize boreholes in Fig. 2, -100 if value unknown but frozen
 
-S                           = shaperead('/Users/jamacgre/Documents/research/data/greenland/basal_evidence/boreholes_temperate.shp');
+S                           = shaperead('/Users/jamacgre/OneDrive - NASA/research/data/greenland/basal_evidence/boreholes_temperate.shp');
 [x_borehole_thawed, y_borehole_thawed] ...
                             = deal([S.X], [S.Y]);
-S                           = shaperead('/Users/jamacgre/Documents/research/data/greenland/basal_evidence/subglacial_lakes.shp');
+S                           = shaperead('/Users/jamacgre/OneDrive - NASA/research/data/greenland/basal_evidence/subglacial_lakes.shp');
 [x_lake, y_lake]            = deal([S.X], [S.Y]);
 
 % Liam's UPS projection, converted to EPSG:3413
-load /Users/jamacgre/Documents/research/matlab/greenland/mat/gimp_proj.mat gimp_proj % EPSG:3413 projection
+load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/gimp_proj.mat', 'gimp_proj') % EPSG:3413 projection
 ups_n                       = gimp_proj;
 ups_n.ProjParm(1:2)         = [90 0];
 clear gimp_proj
@@ -139,7 +149,7 @@ clear gimp_proj
                             = deal((1e-3 .* x_borehole_thawed), (1e-3 .* y_borehole_thawed));
                         
 % load Colgan et al. (2021) additional boreholes
-C21                         = readtable('/Users/jamacgre/Documents/research/data/greenland/Additional_Boreholes_For_Joe.xlsx');
+C21                         = readtable('/Users/jamacgre/OneDrive - NASA/research/data/greenland/Additional_Boreholes_For_Joe.xlsx');
 [x_borehole_frozen, y_borehole_frozen, temp_borehole_frozen] ...
                             = deal([x_borehole_frozen (1e-3 .* C21.EASTING([1:3 end]))'], [y_borehole_frozen (1e-3 .* C21.NORTHING([1:3 end]))'], [temp_borehole_frozen ([-2.3 -1 -1.3 -1.7] + (273.15 - pmp(C21.THICKNESS([1:3 end])')))]);
 [x_borehole_thawed, y_borehole_thawed] ...
@@ -156,25 +166,25 @@ C21                         = readtable('/Users/jamacgre/Documents/research/data
                             = deal([x_borehole_thawed (1e-3 * x_borehole_thawed_new)], [y_borehole_thawed (1e-3 * y_borehole_thawed_new)]); % add in Law et al. (2021) Store R20
 
 % Bowling et al. (2019, Nature Communications) subglacial lakes
-B19                         = load('/Users/jamacgre/Documents/research/data/greenland/Bowling_2019_lakes.mat', 'B19');
+B19                         = load('/Users/jamacgre/OneDrive - NASA/research/data/greenland/Bowling_2019_lakes.mat', 'B19');
 B19                         = B19.B19;
 
 [x_lake, y_lake]            = deal([x_lake (1e-3 .* B19.x(5:6))'], [y_lake (1e-3 .* B19.y(5:6))']); % only include Bowling et al. (2019) subglacial lakes not within original Colgan dataset
 B19                         = B19(7:end, :); % remove subglacial lakes from dataset to focus on basal water later
 
 % Jordan et al. (2018, The Cryosphere) basal water estimates
-J18                         = load('/Users/jamacgre/Documents/research/matlab/greenland/mat/Jordan_2018_basal_water.mat', 'x', 'y', 'basal_water');
+J18                         = load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/Jordan_2018_basal_water.mat', 'x', 'y', 'basal_water');
 
 % Leysinger-Vieli et al. (2018, Nature Communications) basal plumes
 LV18                        = struct;
 [LV18.x_plume_s, LV18.x_plume_l, LV18.y_plume_s, LV18.y_plume_l] ...
-                            = deal(ncread('/Users/jamacgre/Documents/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumesmall_x'), ...
-                                   ncread('/Users/jamacgre/Documents/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumelarge_x'), ...
-                                   ncread('/Users/jamacgre/Documents/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumesmall_y'), ...
-                                   ncread('/Users/jamacgre/Documents/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumelarge_y'));
+                            = deal(ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumesmall_x'), ...
+                                   ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumelarge_x'), ...
+                                   ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumesmall_y'), ...
+                                   ncread('/Users/jamacgre/OneDrive - NASA/research/data/greenland/FreezeOnIndex_MappedPlume_Data.nc', 'plumelarge_y'));
 
 % load Panton and Karlsson (2015) UDRs
-PK15                        = load('/Users/jamacgre/Documents/research/matlab/greenland/mat/UDRs_PantonKarlsson2015.mat', 'latUDRall', 'lonUDRall', 'UDR');
+PK15                        = load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/UDRs_PantonKarlsson2015.mat', 'latUDRall', 'lonUDRall', 'UDR');
 [x_UDR, y_UDR]              = projfwd(projcrs(3413), PK15.latUDRall, PK15.lonUDRall); % lat/lon to EPSG:3413
 [x_UDR, y_UDR]              = deal((1e-3 .* x_UDR), (1e-3 .* y_UDR)); % m to km
 
@@ -206,6 +216,9 @@ ind_y_RAD                   = interp1(y_grd(:, 1), (1:num_y_RAD)', y_decim(:, 1)
 % just decimate masks that shouldn't be filtered
 [mask_gris_decim, mask_combo_decim, mask_D1_decim] ...
                             = deal(BM4.mask_gris(ind_y_BM4, ind_x_BM4), BM4.mask_combo(ind_y_BM4, ind_x_BM4), mask_D1(ind_y_RAD, ind_x_RAD));
+mask_combo_decim_plot		= mask_combo_decim;
+mask_combo_decim_plot(mask_combo_decim_plot == 3) ...
+							= 2; % simply back to 2=all ice (ice sheet and peripheral ice masses) for plotting
 
 %% BUILD THICKNESS-DEPENDENT FILTERS
 
@@ -309,7 +322,8 @@ for jj = 1:num_decim_x % loop through all columns
         
         % filter each variable by multiplying thickness-appropriate normalized 2-D matrix with local values and summing result 
         for kk = 1:num_var
-            if (eval(['sum(filt_decim_curr_' vars{kk}(1:3) '(~isnan(' vars{kk} '(ind_curr_' vars{kk}(1:3) '))), ''omitnan'');']) >= 0.5) % limits bias at edge of grid
+            sum_filt_decim_curr = eval(['sum(filt_decim_curr_' vars{kk}(1:3) '(~isnan(' vars{kk} '(ind_curr_' vars{kk}(1:3) '))), ''omitnan'');']);
+            if (sum_filt_decim_curr >= 0.5) % limits bias at edge of grid
                 eval([vars_filt{kk} '(ii, jj) = sum((filt_decim_curr_' vars{kk}(1:3) '(ind_good_' vars{kk}(1:3) ') .* ' vars{kk} '(ind_curr_' vars{kk}(1:3) ')), ''omitnan'') / sum_filt_decim_curr;'])
             end
         end
@@ -525,7 +539,7 @@ mask_basal_water_warm(mask_basal_water >= threshold_basal_water_warm) ...
 disp('Loading ISMIP6 data and assessing agreement...')
 
 % load ISMIP6 .mat compilation of all ctrl/ctrl_proj runs
-ismip6                      = load('mat/ismip6');
+ismip6                      = load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/ismip6.mat');
 [ismip6.temp_bed_interp, ismip6.temp_bed_pmp, ismip6.thick_interp] ...
                             = deal(cell(1, ismip6.num_inst));
 for ii = 1:ismip6.num_inst
@@ -724,9 +738,9 @@ end
 disp('Load SeaRISE ice thickness used for comparison against ISMIP6...')
 
 SeaRISE                     = struct;
-SeaRISE.x                   = double(ncread('/Users/jamacgre/Documents/data/GBaTSv2/SeaRISE/Greenland_5km_E2.nc', 'x1'))';
-SeaRISE.y                   = double(ncread('/Users/jamacgre/Documents/data/GBaTSv2/SeaRISE/Greenland_5km_E2.nc', 'y1'));
-SeaRISE.elev_bed_orig       = double(ncread('/Users/jamacgre/Documents/data/GBaTSv2/SeaRISE/Greenland_5km_E2.nc', 'topg'))';
+SeaRISE.x                   = double(ncread('/Users/jamacgre/OneDrive - NASA/data/GBaTSv2/SeaRISE/Greenland_5km_E2.nc', 'x1'))';
+SeaRISE.y                   = double(ncread('/Users/jamacgre/OneDrive - NASA/data/GBaTSv2/SeaRISE/Greenland_5km_E2.nc', 'y1'));
+SeaRISE.elev_bed_orig       = double(ncread('/Users/jamacgre/OneDrive - NASA/data/GBaTSv2/SeaRISE/Greenland_5km_E2.nc', 'topg'))';
 
 wgs84                       = wgs84Ellipsoid;
 
@@ -759,74 +773,81 @@ if plotting
    
 %% FIGURE 1: BOREHOLES / LAKES OVERLAIN ON DRIVING STRESS
     
-    figure('position', [200 200 500 800], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 500 800], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; parula(10)])
-    subplot('position', [0.04 0.03 0.9 0.92]);
+    subplot('Position', [0.04 0.03 0.9 0.92]);
     hold on
     range_tmp               = linspace(0, 150, 11);
     plot_tmp                = interp1((range_tmp(1:(end - 1)) + (diff(range_tmp) ./ 2)), 4:13, (1e-3 .* driving_stress), 'nearest', 'extrap');
     plot_tmp(isnan(driving_stress)) ...
-                            = mask_combo_decim(isnan(driving_stress)) + 1;
+                            = mask_combo_decim_plot(isnan(driving_stress)) + 1;
     imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
     for ii = 1:num_coast
-        plot(x_coast{ii}, y_coast{ii}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+        plot(x_coast{ii}, y_coast{ii}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
     end
     for ii = 1:length(x_paral)
-        plot((1e-3 .* x_paral{ii}), (1e-3 .* y_paral{ii}), 'k--', 'linewidth', 1)
+        plot((1e-3 .* x_paral{ii}), (1e-3 .* y_paral{ii}), 'k--', 'LineWidth', 1)
     end
     for ii = 1:length(x_merid)
-        plot((1e-3 .* x_merid{ii}), (1e-3 .* y_merid{ii}), 'k--', 'linewidth', 1)
+        plot((1e-3 .* x_merid{ii}), (1e-3 .* y_merid{ii}), 'k--', 'LineWidth', 1)
     end
     for ii = 1:num_M19
-        plot(M19(ii).X, M19(ii).Y, 'k', 'linewidth', 2.5)
+        plot(M19(ii).X, M19(ii).Y, 'k', 'LineWidth', 2.5)
     end
-    pr                      = plot(NaN, NaN, 'k', 'linewidth', 1);
-    pbf                     = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1);
-    pbt                     = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-    psl                     = plot(x_lake, y_lake, 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-    tb                      = NaN(1, num_M19);
-    tb_pos                  = 1e3 .* [-0.0011   -2.1028         0
-                                       0.0964   -2.5597         0
-                                      -0.1403   -2.5748         0
-                                      -0.2850   -1.5266         0
-                                      -0.0751   -1.1437         0
-                                       0.2128   -1.4003         0
-                                       0.3049   -2.0452         0];
-    for ii = 1:num_M19
-        tb(ii)              = text(mean(M19(ii).X), mean(M19(ii).Y), M19(ii).SUBREGION1, 'color', 'k', 'fontsize', 20, 'fontweight', 'bold');
-        set(tb(ii), 'position', tb_pos(ii, :))
-    end
+    pr                      = plot(NaN, NaN, 'k', 'LineWidth', 1);
+    pbf                     = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1);
+    pbt                     = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+    psl                     = plot(x_lake, y_lake, 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+    tb_pos                  = 1e3 .* [-0.0011   -2.1028;
+                                       0.0964   -2.5597;
+                                      -0.1403   -2.5748;
+                                      -0.2850   -1.5266;
+                                      -0.0751   -1.1437;
+                                       0.2128   -1.4003;
+                                       0.3049   -2.0452];
+	for ii = 1:num_M19
+        text(mean(M19(ii).X), mean(M19(ii).Y), M19(ii).SUBREGION1, 'Color', 'k', 'FontSize', 20, 'FontWeight', 'bold', 'Position', [tb_pos(ii, :) 0]);
+	end
+	core_plot				= { 192 -1945 'Summit';
+							   -27  -1683 'NorthGRIP';
+							   -218 -1419 'NEEM';							   
+							    180 -1601 'EastGRIP';
+							   -616 -1066 {'Prudhoe'; 'Lobe'};
+							    -52 -2788 'DYE-3'};
+	for ii = 1:size(core_plot, 1)
+         text(core_plot{ii, 1}, core_plot{ii, 2}, core_plot{ii, 3}, 'Color', 'w', 'FontSize', 12, 'FontWeight', 'bold');
+	end
     fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-    fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-    text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-    text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-    text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-    text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-    text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 15)
-    text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+    fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+    text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+    text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+    text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+    text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+    text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 15)
+    text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
     caxis([1 14])
     axis equal
     axis([x_min x_max y_min y_max])
     box on
     grid on
-    set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
+    set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
     lg                      = legend([pbf pbt psl], 'borehole (frozen bed)', 'borehole (thawed bed)', 'subglacial lake');
-    set(lg, 'location', 'northoutside', 'color', [0.9 0.9 0.9])
+    [lg.Location, lg.Color] = deal('northoutside', [0.9 0.9 0.9]);
     tick_str                = cell(1, 21);
     for ii = 1:11
         tick_str{ii}        = num2str(range_tmp(ii));
     end
     tick_str{end}           = ['>' tick_str{end}];
-    colorbar('ylim', [4 14], 'ytick', 4:14, 'yticklabel', tick_str, 'fontsize', 20, 'ticklength', 0.0225, 'fontweight', 'bold')
-    text(885, -470, '$\tau_d$', 'fontsize', 20, 'interpreter', 'latex', 'fontweight', 'bold')
-    text(850, -570, '(kPa)', 'color', 'k', 'fontsize', 20, 'fontweight', 'bold')
+    colorbar('ylim', [4 14], 'YTick', 4:14, 'YTickLabel', tick_str, 'FontSize', 20, 'TickLength', 0.0225, 'FontWeight', 'bold')
+    text(885, -470, '$\tau_d$', 'FontSize', 20, 'Interpreter', 'latex', 'FontWeight', 'bold')
+    text(850, -570, '(kPa)', 'Color', 'k', 'FontSize', 20, 'FontWeight', 'bold')
 
 %% FIGURE 2: IMSIP6 MODEL COMPARISON (BASAL TEMPERATURE AT END OF EACH CONTROL RUN)
    
-    load('/Users/jamacgre/Documents/research/matlab/greenland/mat/rb10', 'rb10')
+    load('/Users/jamacgre/OneDrive - NASA/research/matlab/greenland/mat/rb10', 'rb10')
     cmap1                   = [([135 206 235] ./ 255); ([159 89 39] ./ 255); 1 1 1];
     cmap2                   = rb10;
-    figure('position', [100 200 1080 720], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [100 200 1080 720], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([cmap1; cmap2])
     ax                      = NaN(2, 5);
     ranges                  = [-10 0];
@@ -840,54 +861,55 @@ if plotting
     ind_ord                 = [1 3 8 7 10 5 9 2 4 6];
     for ii = ind_ord
         if (ii <= 5)
-            axes('position', [(((ii - 1) * (0.32 / ((y_max - y_min) / (x_max - x_min)))) + 0.01) 0.49 (0.30 / ((y_max - y_min) / (x_max - x_min))) 0.50]);
+            axes('Position', [(((ii - 1) * (0.32 / ((y_max - y_min) / (x_max - x_min)))) + 0.01) 0.49 (0.30 / ((y_max - y_min) / (x_max - x_min))) 0.50]);
         else
-            axes('position', [(((ii - 6) * (0.32 / ((y_max - y_min) / (x_max - x_min)))) + 0.01) 0.00 (0.30 / ((y_max - y_min) / (x_max - x_min))) 0.50]);
+            axes('Position', [(((ii - 6) * (0.32 / ((y_max - y_min) / (x_max - x_min)))) + 0.01) 0.00 (0.30 / ((y_max - y_min) / (x_max - x_min))) 0.50]);
         end
         hold on
         plot_tmp            = 3 + discretize(ismip6.temp_bed_pmp{ismip6_incl_agree(ind_ord(ii), 1)}{ismip6_incl_agree(ind_ord(ii), 2)}, [-Inf range_tmp(2:(end - 1)) Inf]);
-        plot_tmp(isnan(plot_tmp) & ((mask_combo_decim == 0) | ((mask_combo_decim == 2) & (BM4.elev_bed_decim  <= 0)))) ...
+        plot_tmp(isnan(plot_tmp) & ((mask_combo_decim_plot == 0) | ((mask_combo_decim_plot == 2) & (BM4.elev_bed_decim  <= 0)))) ...
                             = 1;
-        plot_tmp(isnan(plot_tmp) & ((mask_combo_decim == 1) | ((mask_combo_decim == 2) & (BM4.elev_bed_decim  > 0)))) ...
+        plot_tmp(isnan(plot_tmp) & ((mask_combo_decim_plot == 1) | ((mask_combo_decim_plot == 2) & (BM4.elev_bed_decim  > 0)))) ...
                             = 2;
         imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
         for jj = 1:length(x_paral)
-            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'linewidth', 0.5)
+            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'LineWidth', 0.5)
         end
         for jj = 1:length(x_merid)
-            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'linewidth', 0.5)
+            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'LineWidth', 0.5)
         end
         for jj = 1:length(x_borehole_frozen)
-            plot(x_borehole_frozen(jj), y_borehole_frozen(jj), 'wo', 'markersize', 8, 'markerfacecolor', cmap2(discretize(temp_borehole_frozen(jj), [-Inf range_tmp(2:(end - 1)) Inf]), :), 'linewidth', 1);
+            plot(x_borehole_frozen(jj), y_borehole_frozen(jj), 'wo', 'MarkerSize', 8, 'MarkerFaceColor', cmap2(discretize(temp_borehole_frozen(jj), [-Inf range_tmp(2:(end - 1)) Inf]), :), 'LineWidth', 1);
         end        
-        plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 8, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-        plot(x_borehole_thawed(10), y_borehole_thawed(10), 'wo', 'markersize', 8, 'markerfacecolor', cmap2(discretize(-1.3, [-Inf range_tmp(2:(end - 1)) Inf]), :), 'linewidth', 1);
-        plot(x_lake, y_lake, 'wd', 'markersize', 7, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
+        plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 8, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+        plot(x_borehole_thawed(10), y_borehole_thawed(10), 'wo', 'MarkerSize', 8, 'MarkerFaceColor', cmap2(discretize(-1.3, [-Inf range_tmp(2:(end - 1)) Inf]), :), 'LineWidth', 1);
+        plot(x_lake, y_lake, 'wd', 'MarkerSize', 7, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
         if (ii == 1)
             fill([325 575 575 325], [-3200 -3200 -3250 -3250], 'k')
-            text(315, -3140, '250 km', 'color', 'k', 'fontsize', 10, 'fontweight', 'bold')
-            text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 10, 'rotation', -10)
-            text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 10, 'rotation', 82)
-            text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 10, 'rotation', 12)
-            text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 10, 'rotation', -75)
+            text(315, -3140, '250 km', 'Color', 'k', 'FontSize', 10, 'FontWeight', 'bold')
+            text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 10, 'Rotation', -10)
+            text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 10, 'Rotation', 82)
+            text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 10, 'Rotation', 12)
+            text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 10, 'Rotation', -75)
         end
         axis equal
         axis([x_min x_max y_min y_max])
         box on
-        set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
-        title(['(' letters(ii) ') ' ismip6.name_inst{ismip6_incl_agree(ind_ord(ii), 1)} '/' ismip6.name_model{ismip6_incl_agree(ind_ord(ii), 1)}{ismip6_incl_agree(ind_ord(ii), 2)}], 'color', 'k', 'fontweight', 'bold', 'fontsize', 16, 'interpreter', 'none')
+        set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
+        title(['(' letters(ii) ') ' ismip6.name_inst{ismip6_incl_agree(ind_ord(ii), 1)} '/' ismip6.name_model{ismip6_incl_agree(ind_ord(ii), 1)}{ismip6_incl_agree(ind_ord(ii), 2)}], 'Color', 'k', 'FontWeight', 'bold', 'FontSize', 16, 'Interpreter', 'none')
         caxis([1 (3 + length(range_tmp))])
         if (ii == num_incl_agree)
-            colorbar('position', [0.90 0.025 0.015 0.94], 'fontsize', 16, 'ylim', [4 (3 + length(range_tmp))], 'ytick', 4:(3 + length(range_tmp)), 'yticklabel', tick_str, 'ticklength', 0.025, 'fontweight', 'bold', 'ticklength', 0.0225, 'fontsize', 16)
-            text(1433, 1537, 'Pressure-corrected basal temperature at end of control run (\circC)', 'color', 'k', 'fontsize', 16, 'fontweight', 'bold', 'rotation', 270)
+            colorbar('Position', [0.90 0.025 0.015 0.94], 'FontSize', 16, 'ylim', [4 (3 + length(range_tmp))], 'YTick', 4:(3 + length(range_tmp)), 'YTickLabel', tick_str, 'TickLength', 0.025, 'FontWeight', 'bold', 'TickLength', 0.0225, 'FontSize', 16)
+            text(1433, 1537, 'Pressure-corrected basal temperature at end of control run (\circC)', 'Color', 'k', 'FontSize', 16, 'FontWeight', 'bold', 'Rotation', 270)
+			text(1200, 2120, 'thawed', 'Color', rb10(end, :), 'FontSize', 12, 'FontWeight', 'bold', 'Rotation', 270)
         end
     end
     
 %% FIGURE 3: ISMIP6 AGREEMENT MAP
     
-    figure('position', [200 200 (1.5 * 500) (((y_max - y_min) / (x_max - x_min)) * 500)], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 (1.5 * 500) (((y_max - y_min) / (x_max - x_min)) * 500)], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; redblue(11, 0.5)])
-    subplot('position', [-0.01 0.02 0.8 0.95])
+    subplot('Position', [-0.01 0.02 0.8 0.95])
     hold on
     range_tmp               = linspace(-1, 1, (num_incl_agree + 1));
     plot_tmp                = NaN(num_decim_y, num_decim_x);
@@ -899,100 +921,100 @@ if plotting
                             = discretize(mask_agree_ismip6(mask_agree_ismip6 > 0), range_tmp, 'includededge', 'right');
     plot_tmp                = 4 + plot_tmp;
     plot_tmp(isnan(plot_tmp)) ...
-                            = mask_combo_decim(isnan(plot_tmp)) + 1;
+                            = mask_combo_decim_plot(isnan(plot_tmp)) + 1;
     imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
     for ii = 1:num_coast
-        plot(x_coast{ii}, y_coast{ii}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+        plot(x_coast{ii}, y_coast{ii}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
     end
     for ii = 1:length(x_paral)
-        plot((1e-3 .* x_paral{ii}), (1e-3 .* y_paral{ii}), 'k--', 'linewidth', 1)
+        plot((1e-3 .* x_paral{ii}), (1e-3 .* y_paral{ii}), 'k--', 'LineWidth', 1)
     end
     for ii = 1:length(x_merid)
-        plot((1e-3 .* x_merid{ii}), (1e-3 .* y_merid{ii}), 'k--', 'linewidth', 1)
+        plot((1e-3 .* x_merid{ii}), (1e-3 .* y_merid{ii}), 'k--', 'LineWidth', 1)
     end
     for ii = 1:num_M19
-        plot(M19(ii).X, M19(ii).Y, 'k', 'linewidth', 2)
+        plot(M19(ii).X, M19(ii).Y, 'k', 'LineWidth', 2)
     end
-    pbf                     = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1);
-    pbt                     = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-    psl                     = plot(x_lake, y_lake, 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
+    pbf                     = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1);
+    pbt                     = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+    psl                     = plot(x_lake, y_lake, 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
     fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-    fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-    text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-    text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-    text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-    text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-    text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 13)
-    text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+    fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+    text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+    text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+    text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+    text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+    text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 13)
+    text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
     caxis([1 (5 + num_incl_agree)])
     axis equal
     axis([x_min x_max y_min y_max])
     box on
-    set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
-    colorbar('fontsize', 20, 'location', 'eastoutside', 'limits', [4 (5 + num_incl_agree)], 'ytick', 4:(5 + num_incl_agree), 'ticklength', 0.018, 'fontweight', 'bold', 'yticklabel', {})
+    set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
+    colorbar('FontSize', 20, 'Location', 'eastoutside', 'Limits', [4 (5 + num_incl_agree)], 'YTick', 4:(5 + num_incl_agree), 'TickLength', 0.018, 'FontWeight', 'bold', 'YTickLabel', {})
     tick_str                = {'all agree frozen bed' '9 / 10 frozen' '8 / 10 frozen' '7 / 10 frozen' '6 / 10 frozen' '5 frozen, 5 thawed' '6 / 10 thawed' '7 / 10 thawed' '8 / 10 thawed' '9 / 10 thawed' 'all agree thawed bed'};
     for ii = 1:(num_incl_agree + 1)
-        text(940, (-3475 + (ii * 245)), tick_str{ii}, 'color', 'k', 'fontsize', 20, 'fontweight', 'bold')
+        text(940, (-3475 + (ii * 245)), tick_str{ii}, 'Color', 'k', 'FontSize', 20, 'FontWeight', 'bold')
     end   
     
 %% FIGURE 4: NYE+MELT MELT RATE
     
     rb                      = redblue(20, 0.5);
-    figure('position', [200 200 (1.25 * 500) (((y_max - y_min) / (x_max - x_min)) * 500)], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 (1.25 * 500) (((y_max - y_min) / (x_max - x_min)) * 500)], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; rb([9 11:end], :)])
-    subplot('position', [0.05 0.02 0.8 0.90])
+    subplot('Position', [0.05 0.02 0.8 0.90])
     hold on
     range_tmp               = linspace(-0.01, 0.1, 12);
     plot_tmp                = 3 + discretize(melt_bed_filt, [-Inf range_tmp(2:(end - 1)) Inf]);
     plot_tmp(isnan(plot_tmp) | ~mask_D1_decim) ...
-                            = mask_combo_decim(isnan(plot_tmp) | ~mask_D1_decim) + 1;
+                            = mask_combo_decim_plot(isnan(plot_tmp) | ~mask_D1_decim) + 1;
     imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
     for ii = 1:num_coast
-        plot(x_coast{ii}, y_coast{ii}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+        plot(x_coast{ii}, y_coast{ii}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
     end
     for ii = 1:length(x_paral)
-        plot((1e-3 .* x_paral{ii}), (1e-3 .* y_paral{ii}), 'k--', 'linewidth', 1)
+        plot((1e-3 .* x_paral{ii}), (1e-3 .* y_paral{ii}), 'k--', 'LineWidth', 1)
     end
     for ii = 1:length(x_merid)
-        plot((1e-3 .* x_merid{ii}), (1e-3 .* y_merid{ii}), 'k--', 'linewidth', 1)
+        plot((1e-3 .* x_merid{ii}), (1e-3 .* y_merid{ii}), 'k--', 'LineWidth', 1)
     end
     for ii = 1:num_M19
-        plot(M19(ii).X, M19(ii).Y, 'k', 'linewidth', 2)
+        plot(M19(ii).X, M19(ii).Y, 'k', 'LineWidth', 2)
     end
-    pbf                     = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1);
-    pbt                     = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-    psl                     = plot(x_lake, y_lake, 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
+    pbf                     = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1);
+    pbt                     = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+    psl                     = plot(x_lake, y_lake, 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
     fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-    fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-    text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-    text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-    text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-    text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-    text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 13)
-    text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+    fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+    text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+    text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+    text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+    text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+    text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 13)
+    text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
     caxis([1 15])
     axis equal
     axis([x_min x_max y_min y_max])
     box on
-    set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
+    set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
     tick_str                = cell(1, 11);
     for ii = 1:12
         tick_str{ii}        = num2str(1e2 * range_tmp(ii));
     end
     tick_str{1}             = ['<' tick_str{1}];
     tick_str{end}           = ['>' tick_str{end}];    
-    colorbar('fontsize', 20, 'location', 'eastoutside', 'limits', [4 15], 'ytick', 4:15, 'yticklabel', tick_str, 'ticklength', 0.018, 'fontweight', 'bold')
-    text(800, -550, '(cm yr^{-1})', 'color', 'k', 'fontsize', 20, 'fontweight', 'bold')
+    colorbar('FontSize', 20, 'Location', 'eastoutside', 'Limits', [4 15], 'YTick', 4:15, 'YTickLabel', tick_str, 'TickLength', 0.018, 'FontWeight', 'bold')
+    text(800, -550, '(cm yr^{-1})', 'Color', 'k', 'FontSize', 20, 'FontWeight', 'bold')
     
 
 %% FIGURE 5: BASAL WATER MASKS
 
     plots                   = {'mask_basal_water_J18_exp' 'mask_basal_water_B19_exp' 'mask_plume_combo_exp' 'mask_basal_water'};
-    figure('position', [200 200 1500 800], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 1500 800], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; 0.85 0.85 0.85; 1 0.7 0.7; 1 0 0; 0.5 0 0])
     titles                  = {{'(a) Jordan et al. (2018)'; 'basal water identifications'} {'(b) Bowling et al. (2019)'; 'subglacial lakes'} {'(c) Panton and Karlsson (2015) UDRs +'; 'Leysinger-Vieli et al. (2018) basal plumes'} '(d) synthesis'};
     for ii = 1:4
-        subplot('position', [(0.005 + ((ii - 1) * 0.25)) 0.11 (0.94 / 4) (0.94 / 1.1)])
+        subplot('Position', [(0.005 + ((ii - 1) * 0.25)) 0.11 (0.94 / 4) (0.94 / 1.1)])
         hold on
         plot_tmp            = eval(plots{ii});
         plot_tmp(plot_tmp == 0) ...
@@ -1019,65 +1041,65 @@ if plotting
                             = 6;
         end
         plot_tmp(isnan(plot_tmp)) ...
-                            = mask_combo_decim(isnan(plot_tmp)) + 1;        
+                            = mask_combo_decim_plot(isnan(plot_tmp)) + 1;        
         imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
         for jj = 1:num_coast
-            plot(x_coast{jj}, y_coast{jj}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+            plot(x_coast{jj}, y_coast{jj}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         end
         for jj = 1:length(x_paral)
-            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:length(x_merid)
-            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:num_M19
-            plot(M19(jj).X, M19(jj).Y, 'k', 'linewidth', 2)
+            plot(M19(jj).X, M19(jj).Y, 'k', 'LineWidth', 2)
         end
-        plot(x_borehole_frozen, y_borehole_frozen, 'o', 'markersize', 16, 'color', [0 0 0.75], 'linewidth', 2)
-        plot(x_borehole_thawed, y_borehole_thawed, 'o', 'markersize', 16, 'color', [0.75 0 0], 'linewidth', 2)
-        plot(x_lake, y_lake, 'd', 'markersize', 14, 'color', [0.75 0 0], 'linewidth', 2)        
+        plot(x_borehole_frozen, y_borehole_frozen, 'o', 'MarkerSize', 16, 'Color', [0 0 0.75], 'LineWidth', 2)
+        plot(x_borehole_thawed, y_borehole_thawed, 'o', 'MarkerSize', 16, 'Color', [0.75 0 0], 'LineWidth', 2)
+        plot(x_lake, y_lake, 'd', 'MarkerSize', 14, 'Color', [0.75 0 0], 'LineWidth', 2)        
         fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-        text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-        text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-        text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-        text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-        text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 15)
-        text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+        text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+        text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+        text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+        text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+        text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 15)
+        text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
         caxis([1 8])
         axis equal
         axis([x_min x_max y_min y_max])
         box on
-        set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
+        set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
         if (ii == 3)
-            colorbar('fontsize', 20, 'location', 'eastoutside', 'ylim', [5 7], 'ytick', 5:7, 'yticklabel', {'' '' ''}, 'ticklength', 0.02, 'fontweight', 'bold')            
+            colorbar('FontSize', 20, 'Location', 'eastoutside', 'ylim', [5 7], 'YTick', 5:7, 'YTickLabel', {'' '' ''}, 'TickLength', 0.02, 'FontWeight', 'bold')            
         else
-            colorbar('fontsize', 20, 'location', 'eastoutside', 'ylim', [5 8], 'ytick', 5:8, 'yticklabel', {'' '' '' ''}, 'ticklength', 0.02, 'fontweight', 'bold')
+            colorbar('FontSize', 20, 'Location', 'eastoutside', 'ylim', [5 8], 'YTick', 5:8, 'YTickLabel', {'' '' '' ''}, 'TickLength', 0.02, 'FontWeight', 'bold')
         end
         switch ii
             case 1
-                text(1035, -2554, '1-4 / 5-km cell', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1035, -1655, '5-9 / 5-km cell', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1035, -777, '10+ / 5-km cell', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
+                text(1035, -2554, '1-4 / 5-km cell', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1035, -1655, '5-9 / 5-km cell', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1035, -777, '10+ / 5-km cell', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
             case 2
-                text(1035, -2565, 'low confidence', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1035, -1550, 'medium confidence', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1065.5, -1108, {'high or very high'; 'confidence'}, 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270, 'horizontalalignment', 'center')
+                text(1035, -2565, 'low confidence', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1035, -1550, 'medium confidence', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1065.5, -1108, {'high or very high'; 'confidence'}, 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270, 'HorizontalAlignment', 'center')
             case 3
-                text(1035, -2231, 'small UDR/plume', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1035, -915, 'large UDR/plume', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
+                text(1035, -2231, 'small UDR/plume', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1035, -915, 'large UDR/plume', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
             case 4
-                text(1035, -2555, 'low confidence', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1035, -1560, 'medium confidence', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-                text(1035, -725, 'high confidence', 'fontsize', 20, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
+                text(1035, -2555, 'low confidence', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1035, -1560, 'medium confidence', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+                text(1035, -725, 'high confidence', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
         end
-        title(titles{:, ii}, 'fontsize', 22, 'fontweight', 'bold')
+        title(titles{:, ii}, 'FontSize', 22, 'FontWeight', 'bold')
     end
     
 %% FIGURE 6: SURFACE/DEFORMATION SPEED RATIO
 
     rb                      = redblue(11, 0.5);
-    figure('position', [200 200 1600 800], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 1600 800], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; parula(10); rb([1:5 7:11], :)])
     ranges                  = [0 100; 0 100; NaN NaN];
     incs                    = [10 10 NaN];
@@ -1087,7 +1109,7 @@ if plotting
     units                   = {'m yr^{-1}' 'm yr^{-1}' ''};
     [ax, cb]                = deal(NaN(1, 3));
     for ii = 1:3
-        ax(ii)              = subplot('position', [(-0.005 + (0.325 * (ii - 1))) 0.02 0.325 0.9]);
+        ax(ii)              = subplot('Position', [(-0.005 + (0.325 * (ii - 1))) 0.02 0.325 0.9]);
         hold on
         if (ii < 3)
             range_tmp       = ranges(ii, 1):incs(ii):ranges(ii, 2);
@@ -1097,50 +1119,50 @@ if plotting
             plot_tmp        = 13 + discretize(eval(plots{ii}), [-Inf range_tmp(2:(end - 1)) Inf]);
         end
         plot_tmp(isnan(plot_tmp)) ...
-                            = mask_combo_decim(isnan(plot_tmp)) + 1;
+                            = mask_combo_decim_plot(isnan(plot_tmp)) + 1;
         image(x_decim(1, :), y_decim(:, 1), plot_tmp)
         if (ii == 3)
-            [~, cu]         = contour(x_decim, y_decim, (speed_filt ./ speed_def), [1 1], 'linewidth', 1.5, 'color', 'w');
+            [~, cu]         = contour(x_decim, y_decim, (speed_filt ./ speed_def), [1 1], 'LineWidth', 1.5, 'Color', 'w');
         end
         if (ii == 1)
-            [~, cuu]        = contour(x_decim, y_decim, (speed_uncert_filt ./ speed_filt), speed_uncert_rel_decay([1 1]), 'linewidth', 1.5, 'color', 'w');
+            [~, cuu]        = contour(x_decim, y_decim, (speed_uncert_filt ./ speed_filt), speed_uncert_rel_decay([1 1]), 'LineWidth', 1.5, 'Color', 'w');
         end
         for jj = 1:length(x_paral)
-            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:length(x_merid)
-            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:num_coast
-            plot(x_coast{jj}, y_coast{jj}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+            plot(x_coast{jj}, y_coast{jj}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         end
         for jj = 1:num_M19
-            plot(M19(jj).X, M19(jj).Y, 'k', 'linewidth', 2)
+            plot(M19(jj).X, M19(jj).Y, 'k', 'LineWidth', 2)
         end
-        plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1)
-        plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1)
-        plot(x_lake, y_lake, 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1)
+        plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1)
+        plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1)
+        plot(x_lake, y_lake, 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1)
         caxis([1 24])
         axis equal
         axis([x_min x_max y_min y_max])
         box on
-        set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [])
+        set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [])
         if ~isempty(units{ii})
-            text(825, -525, ['(' units{ii} ')'], 'color', 'k', 'fontsize', 20)
+            text(825, -525, ['(' units{ii} ')'], 'Color', 'k', 'FontSize', 20)
         end
         fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-        text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-        text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-        text(-550, -800, repmat(' ', 1, (spaces(ii) + 1)), 'color', 'k', 'fontsize', 22, 'fontweight', 'bold', 'edgecolor', 'k', 'backgroundcolor', 'w')
-        text(-550, -800, ['(' letters(ii) ')' repmat(' ', 1, spaces(ii))], 'color', 'k', 'fontsize', 20, 'fontweight', 'bold')
-        text(-440, -810, titles{ii}, 'color', 'k', 'fontsize', 20, 'interpreter', 'latex')
-        text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-        text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-        text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 12)
-        text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+        text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+        text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+        text(-550, -800, repmat(' ', 1, (spaces(ii) + 1)), 'Color', 'k', 'FontSize', 22, 'FontWeight', 'bold', 'EdgeColor', 'k', 'backgroundcolor', 'w')
+        text(-550, -800, ['(' letters(ii) ')' repmat(' ', 1, spaces(ii))], 'Color', 'k', 'FontSize', 20, 'FontWeight', 'bold')
+        text(-440, -810, titles{ii}, 'Color', 'k', 'FontSize', 20, 'Interpreter', 'latex')
+        text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+        text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+        text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 12)
+        text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
         if (ii == 1)
-%             legend(cuu, '$\tilde{u_s} = 25\%$', 'location', 'northeast', 'interpreter', 'latex', 'color', [0.85 0.85 0.85])
+%             legend(cuu, '$\tilde{u_s} = 25\%$', 'Location', 'northeast', 'Interpreter', 'latex', 'Color', [0.85 0.85 0.85])
         end
         if (ii < 3)
             tick_str        = cell(1, 11);
@@ -1148,14 +1170,14 @@ if plotting
                 tick_str{jj}= num2str(range_tmp(jj));
             end
             tick_str{end}   = ['>' tick_str{end}];
-            cb(ii)          = colorbar('fontsize', 20, 'location', 'eastoutside', 'limits', [4 14], 'ytick', 4:14, 'yticklabel', tick_str, 'ticklength', 0.022);
+            cb(ii)          = colorbar('FontSize', 20, 'Location', 'eastoutside', 'Limits', [4 14], 'YTick', 4:14, 'YTickLabel', tick_str, 'TickLength', 0.022);
         else
-            cb(ii)          = colorbar('fontsize', 20, 'location', 'eastoutside', 'limits', [14 24], 'ytick', 14:24, 'yticklabel', {'<0.5' '0.6' '0.7' '0.8' '0.9' '1' '1.5' '2' '3' '4' '>5'}, 'ticklength', 0.022);
+            cb(ii)          = colorbar('FontSize', 20, 'Location', 'eastoutside', 'Limits', [14 24], 'YTick', 14:24, 'YTickLabel', {'<0.5' '0.6' '0.7' '0.8' '0.9' '1' '1.5' '2' '3' '4' '>5'}, 'TickLength', 0.022);
         end
     end
-    annotation('line', [0.9234 0.9335], [0.4688 0.4688], 'color', 'w', 'linewidth', 3)
+    annotation('line', [0.9234 0.9335], [0.4688 0.4688], 'Color', 'w', 'LineWidth', 3)
     pause(1)
-    set(cb(1:2), 'limits', [4 14])
+    [cb(1:2).Limits]		= deal([4 14]);
     
 %% FIGURE 7: BASAL THERMAL STATE AGREEMENT MASKS
     
@@ -1163,65 +1185,65 @@ if plotting
     tmp                     = [tmp1([2 4:end], :); (2 / 3) 0 0];
     c1                      = [([135 206 235] ./ 255); ([159 89 39] ./ 255); 1 1 1];
     c2                      = [([135 206 235] ./ 255); ([159 89 39] ./ 255); 1 1 1; tmp];
-    figure('position', [200 200 1500 800], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 1500 800], 'Color', 'w', 'Renderer', 'zbuffer')
     ax                      = NaN(1, 4);
     titles                  = {'Thawed outlines (standard)' 'Agreement (standard)' 'Agreement (cold bias)' 'Agreement (warm bias)'};
     plots                   = {'' 'mask_agree' 'mask_agree_cold' 'mask_agree_warm'};
     range_tmp               = [-0.25 0 0.25 0.5 0.75 1];
     for ii = 1:4
-        ax(ii)              = subplot('position', [(0.02 + ((ii - 1) * 0.245)) 0.11 (0.94 / 4) (0.94 / 1.1)]);
+        ax(ii)              = subplot('Position', [(0.02 + ((ii - 1) * 0.245)) 0.11 (0.94 / 4) (0.94 / 1.1)]);
         colormap(c1)
         hold on
         if (ii == 1)
-            imagesc(x_decim(1, :), y_decim(:, 1), (mask_combo_decim + 1))
+            imagesc(x_decim(1, :), y_decim(:, 1), (mask_combo_decim_plot + 1))
         else
             
             plot_tmp        = 3 + interp1(range_tmp, 1:6, eval(plots{ii}), 'nearest');
             plot_tmp(isnan(plot_tmp)) ...
-                            = mask_combo_decim(isnan(plot_tmp)) + 1;
+                            = mask_combo_decim_plot(isnan(plot_tmp)) + 1;
             imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
         end
         for jj = 1:num_coast
-            plot(x_coast{jj}, y_coast{jj}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+            plot(x_coast{jj}, y_coast{jj}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         end
         for jj = 1:length(x_paral)
-            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:length(x_merid)
-            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:num_M19
-            plot(M19(jj).X, M19(jj).Y, 'k', 'linewidth', 2)
+            plot(M19(jj).X, M19(jj).Y, 'k', 'LineWidth', 2)
         end
         if (ii == 1)
-            contour(x_decim(1, :), y_decim(:, 1), mask_agree_ismip6, repmat(constraint(3, 2), 1, 2), 'r', 'linewidth', 2);
-            contour(x_decim(1, :), y_decim(:, 1), melt_bed_filt, repmat(constraint(1, 2), 1, 2), 'b', 'linewidth', 2);
-            contour(x_decim(1, :), y_decim(:, 1), speed_ratio_std, repmat(constraint(2, 2), 1, 2), 'g', 'linewidth', 2);
-            contour(x_decim(1, :), y_decim(:, 1), mask_basal_water_std, repmat(constraint(2, 2), 1, 2), 'm', 'linewidth', 2);
-            psr             = plot(NaN, NaN, 'r', 'linewidth', 2);
-            psf             = plot(NaN, NaN, 'b', 'linewidth', 2);
-            pud             = plot(NaN, NaN, 'g', 'linewidth', 2);
-            pmg             = plot(NaN, NaN, 'm', 'linewidth', 2);
+            contour(x_decim(1, :), y_decim(:, 1), mask_agree_ismip6, repmat(constraint(3, 2), 1, 2), 'Color', ([166 97 26] ./ 255), 'LineWidth', 2);
+            contour(x_decim(1, :), y_decim(:, 1), melt_bed_filt, repmat(constraint(1, 2), 1, 2), 'Color', ([223 194 125] ./ 255), 'LineWidth', 2);
+            contour(x_decim(1, :), y_decim(:, 1), speed_ratio_std, repmat(constraint(2, 2), 1, 2), 'Color', ([128 205 193] ./ 255), 'LineWidth', 2);
+            contour(x_decim(1, :), y_decim(:, 1), mask_basal_water_std, repmat(constraint(2, 2), 1, 2), 'Color', ([1 133 113] ./ 255), 'LineWidth', 2);
+            psr             = plot(NaN, NaN, 'Color', ([166 97 26] ./ 255), 'LineWidth', 2);
+            psf             = plot(NaN, NaN, 'Color', ([223 194 125] ./ 255), 'LineWidth', 2);
+            pud             = plot(NaN, NaN, 'Color', ([128 205 193] ./ 255), 'LineWidth', 2);
+            pmg             = plot(NaN, NaN, 'Color', ([1 133 113] ./ 255), 'LineWidth', 2);
         end
-        pbf                 = plot(x_borehole_frozen, y_borehole_frozen, 'ko', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1);
-        pbt                 = plot(x_borehole_thawed, y_borehole_thawed, 'ko', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-        psl                 = plot(x_lake, y_lake, 'kd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
+        pbf                 = plot(x_borehole_frozen, y_borehole_frozen, 'ko', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1);
+        pbt                 = plot(x_borehole_thawed, y_borehole_thawed, 'ko', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+        psl                 = plot(x_lake, y_lake, 'kd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
         if (ii > 1)
-            set([pbf pbt psl], 'color', 'w')
+            set([pbf pbt psl], 'Color', 'w')
         end
         fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-        text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-        text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-        text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-        text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-        text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 15)
-        text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+        text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+        text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+        text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+        text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+        text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 15)
+        text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
         axis equal
         axis([x_min x_max y_min y_max])
         box on
-        set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
-        title(['(' letters(ii) ') ' titles{ii}], 'color', 'k', 'fontweight', 'bold')
+        set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
+        title(['(' letters(ii) ') ' titles{ii}], 'Color', 'k', 'FontWeight', 'bold')
         switch ii
             case 1
                 caxis([1 3])
@@ -1230,19 +1252,19 @@ if plotting
                 colormap(ax(ii), c2)
         end
         if (ii == 2)
-            lg              = legend([pbf pbt psl psr psf pud pmg], 'borehole (frozen bed)', 'borehole (thawed bed)', 'subglacial lake', 'ISMIP6 thawed', '$\dot{m}$ = 1 cm yr$^{-1}$', '$\gamma_{min} = 1$', 'basal water', 'interpreter', 'latex');
-            set(lg, 'position', [0.0676 0.0142 0.1454 0.1991])
-            cb              = colorbar('fontsize', 20, 'location', 'southoutside', 'xlim', [4 10], 'xtick', 4:10, 'xticklabel', {},'position', [0.265 0.08 (0.76 + (0.91 / 4) - 0.26) 0.025], 'ticklength', 0.018);
+            lg              = legend([pbf pbt psl psr psf pud pmg], 'borehole (frozen bed)', 'borehole (thawed bed)', 'subglacial lake', 'ISMIP6 thawed', '$\dot{m}$ = 1 cm yr$^{-1}$', '$\gamma_{min} = 1$', 'basal water', 'Interpreter', 'latex');
+            set(lg, 'Position', [0.0676 0.0142 0.1454 0.1991])
+            cb              = colorbar('FontSize', 20, 'Location', 'southoutside', 'xlim', [4 10], 'XTick', 4:10, 'XTickLabel', {}, 'Position', [0.265 0.08 (0.76 + (0.91 / 4) - 0.26) 0.025], 'TickLength', 0.018);
             tick_str        = {'-1 frozen' '0 no agreement' '+1 thawed' '+2 thawed' ' +3 thawed' '+4 all agree thawed'};
             x_tick          = [-450 200 1100 1800 2550 3150];
             for jj = 1:6
-                text(x_tick(jj), -3600, tick_str{jj}, 'color', 'k', 'fontsize', 20, 'fontweight', 'bold')
+                text(x_tick(jj), -3600, tick_str{jj}, 'Color', 'k', 'FontSize', 20, 'FontWeight', 'bold')
             end
         end
     end
     linkaxes(ax)
     pause(1)
-    set(ax(2:3), 'colormap', get(ax(4), 'colormap'))
+    set(ax(2:3), 'Colormap', get(ax(4), 'Colormap'))
     
 %% FIGURE 8: GBaTSv2 LIKELY BASAL THERMAL STATE
     
@@ -1251,10 +1273,10 @@ if plotting
     rb2                     = [0.5 0.5 1; 0.9 0.9 0.9; 1 0.5 0.5];
     plots                   = {'GBaTSv1.mask_likely_filled' 'mask_likely_filled' '(mask_likely_filled - GBaTSv1.mask_likely_filled)'};
     titles                  = {'GBaTSv1 (M16)' 'GBaTSv2 (this study)' 'difference (GBaTSv2 - GBaTSv1)'};
-    figure('position', [200 200 1600 800], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 1600 800], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; rb; rb2])
     for ii = 1:3
-        subplot('position', [(-0.005 + (0.325 * (ii - 1))) 0.02 0.325 0.9])
+        subplot('Position', [(-0.005 + (0.325 * (ii - 1))) 0.02 0.325 0.9])
         hold on
         if (ii < 3)
             plot_tmp        = interp1(-1:1, 4:6, eval(plots{ii}), 'nearest', 'extrap');
@@ -1262,69 +1284,68 @@ if plotting
             plot_tmp        = interp1(-1:1, 7:9, eval(plots{ii}), 'nearest', 'extrap');
         end
         plot_tmp(isnan(plot_tmp)) ...
-                            = mask_combo_decim(isnan(plot_tmp)) + 1;
+                            = mask_combo_decim_plot(isnan(plot_tmp)) + 1;
         imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
         for jj = 1:num_coast
-            plot(x_coast{jj}, y_coast{jj}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+            plot(x_coast{jj}, y_coast{jj}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         end
         for jj = 1:length(x_paral)
-            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:length(x_merid)
-            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:num_M19
-            plot(M19(jj).X, M19(jj).Y, 'k', 'linewidth', 2)
+            plot(M19(jj).X, M19(jj).Y, 'k', 'LineWidth', 2)
         end
         if (ii == 1)
-            plot([x_borehole_frozen(1:8) x_borehole_thawed(10)], [y_borehole_frozen(1:8) y_borehole_thawed(10)], 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1)
-            plot(x_borehole_thawed(1:8), y_borehole_thawed(1:8), 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1)
-            plot(x_lake(1:4), y_lake(1:4), 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1)
+            plot([x_borehole_frozen(1:8) x_borehole_thawed(10)], [y_borehole_frozen(1:8) y_borehole_thawed(10)], 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1)
+            plot(x_borehole_thawed(1:8), y_borehole_thawed(1:8), 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1)
+            plot(x_lake(1:4), y_lake(1:4), 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1)
         else
-            plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1)
-            plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1)
-            plot(x_lake, y_lake, 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1)
+            plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1)
+            plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1)
+            plot(x_lake, y_lake, 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1)
         end
         fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-        text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-        text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-        text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-        text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-        text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 13)
-        text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+        text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+        text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+        text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+        text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+        text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 13)
+        text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
         caxis([1 10])
         axis equal
         axis([x_min x_max y_min y_max])
         box on
-        set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
+        set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
         if (ii < 3)
-            colorbar('fontsize', 20, 'location', 'eastoutside', 'ylim', [4 7], 'ytick', 4:7, 'yticklabel', {'' '' '' ''}, 'ticklength', 0.02, 'fontweight', 'bold')
-            text(1050, -900, 'likely thawed', 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-            text(1050, -1850, 'uncertain', 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-            text(1050, -2700, 'likely frozen', 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
+            colorbar('FontSize', 20, 'Location', 'eastoutside', 'ylim', [4 7], 'YTick', 4:7, 'YTickLabel', {'' '' '' ''}, 'TickLength', 0.02, 'FontWeight', 'bold')
+            text(1050, -900, 'likely thawed', 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+            text(1050, -1850, 'uncertain', 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+            text(1050, -2700, 'likely frozen', 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
         else
-            colorbar('fontsize', 20, 'location', 'eastoutside', 'ylim', [7 10], 'ytick', 7:10, 'yticklabel', {'' '' '' ''}, 'ticklength', 0.02, 'fontweight', 'bold')
-            text(1050, -750, 'more likely thawed', 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-            text(1050, -1800, 'no change', 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
-            text(1050, -2550, 'more likely frozen', 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'rotation', 270)
+            colorbar('FontSize', 20, 'Location', 'eastoutside', 'ylim', [7 10], 'YTick', 7:10, 'YTickLabel', {'' '' '' ''}, 'TickLength', 0.02, 'FontWeight', 'bold')
+            text(1050, -750, 'more likely thawed', 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+            text(1050, -1800, 'no change', 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
+            text(1050, -2550, 'more likely frozen', 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'Rotation', 270)
         end
-        if (ii == 1)
-            text(192, -1945, 'S', 'color', 'w', 'fontsize', 18, 'fontweight', 'bold')
-            text(-27, -1683, 'NG', 'color', 'w', 'fontsize', 18, 'fontweight', 'bold')
-        end
-        title(['(' letters(ii) ') ' titles{ii}], 'fontweight', 'bold')
+        title(['(' letters(ii) ') ' titles{ii}], 'FontWeight', 'bold')
+		if (ii == 2)
+			set(gca, 'LineWidth', 4, 'FontSize', 28)
+		end
     end
 
 %% FIGURE 9: ISMIP6 VS SEARISE AGREEMENT
     
     tmp                     = redblue(12, 0.5);
     tmp2                    = flipud(hot(10));
-    figure('position', [200 200 1600 800], 'color', 'w', 'renderer', 'zbuffer')
+    figure('Position', [200 200 1600 800], 'Color', 'w', 'Renderer', 'zbuffer')
     colormap([([135 206 235] ./ 255); ([159 89 39] ./ 255); 0.9 0.9 0.9; tmp([1:5 8:12], :); tmp2])
     titles                  = {{'(a) Change in ice thickness'; 'from SeaRISE to ISMIP6 (m)'} {'(b) Change in agreement that bed is likely thawed'; 'from SeaRISE to ISMIP6 (%)'}};
     for ii = 1:2
-        subplot('position', [(-0.005 + (0.35 * (ii - 1))) 0.02 0.325 0.9])
+        subplot('Position', [(-0.005 + (0.35 * (ii - 1))) 0.02 0.325 0.9])
         hold on
         switch ii
             case 1
@@ -1344,36 +1365,36 @@ if plotting
         end
         plot_tmp            = 3 + plot_tmp;
         plot_tmp(isnan(plot_tmp) | ~mask_gris_decim) ...
-                            = mask_combo_decim(isnan(plot_tmp) | ~mask_gris_decim) + 1;
+                            = mask_combo_decim_plot(isnan(plot_tmp) | ~mask_gris_decim) + 1;
         imagesc(x_decim(1, :), y_decim(:, 1), plot_tmp)
         for jj = 1:num_coast
-            plot(x_coast{jj}, y_coast{jj}, 'color', [0.5 0.5 0.5], 'linewidth', 1)
+            plot(x_coast{jj}, y_coast{jj}, 'Color', [0.5 0.5 0.5], 'LineWidth', 1)
         end
         for jj = 1:length(x_paral)
-            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_paral{jj}), (1e-3 .* y_paral{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:length(x_merid)
-            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'linewidth', 1)
+            plot((1e-3 .* x_merid{jj}), (1e-3 .* y_merid{jj}), 'k--', 'LineWidth', 1)
         end
         for jj = 1:num_M19
-            plot(M19(jj).X, M19(jj).Y, 'k', 'linewidth', 2)
+            plot(M19(jj).X, M19(jj).Y, 'k', 'LineWidth', 2)
         end
-        pbf                 = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'markersize', 16, 'markerfacecolor', [0 0 0.75], 'linewidth', 1);
-        pbt                 = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'markersize', 16, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
-        psl                 = plot(x_lake, y_lake, 'wd', 'markersize', 14, 'markerfacecolor', [0.75 0 0], 'linewidth', 1);
+        pbf                 = plot(x_borehole_frozen, y_borehole_frozen, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0 0 0.75], 'LineWidth', 1);
+        pbt                 = plot(x_borehole_thawed, y_borehole_thawed, 'wo', 'MarkerSize', 16, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
+        psl                 = plot(x_lake, y_lake, 'wd', 'MarkerSize', 14, 'MarkerFaceColor', [0.75 0 0], 'LineWidth', 1);
         fill([325 450 450 325], [-3230 -3230 -3260 -3260], 'k')
-        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'edgecolor', 'k')
-        text(300, -3180, '0', 'color', 'k', 'fontsize', 18)
-        text(520, -3180, '250 km', 'color', 'k', 'fontsize', 18)
-        text(-607, -3215, '60\circN', 'color', 'k', 'fontsize', 18, 'rotation', -10)
-        text(-334, -3250, '50\circW', 'color', 'k', 'fontsize', 18, 'rotation', 82)
-        text(483, -2771, '65\circN', 'color', 'k', 'fontsize', 18, 'rotation', 13)
-        text(717, -2897, '30\circW', 'color', 'k', 'fontsize', 18, 'rotation', -75)
+        fill([450 575 575 450], [-3230 -3230 -3260 -3260], 'w', 'EdgeColor', 'k')
+        text(300, -3180, '0', 'Color', 'k', 'FontSize', 18)
+        text(520, -3180, '250 km', 'Color', 'k', 'FontSize', 18)
+        text(-607, -3215, '60\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', -10)
+        text(-334, -3250, '50\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', 82)
+        text(483, -2771, '65\circN', 'Color', 'k', 'FontSize', 18, 'Rotation', 13)
+        text(717, -2897, '30\circW', 'Color', 'k', 'FontSize', 18, 'Rotation', -75)
         caxis([1 24])
         axis equal
         axis([x_min x_max y_min y_max])
         box on
-        set(gca, 'fontsize', 20, 'layer', 'top', 'xtick', [], 'ytick', [], 'xticklabel', {}, 'yticklabel', {})
+        set(gca, 'FontSize', 20, 'Layer', 'top', 'XTick', [], 'YTick', [], 'XTickLabel', {}, 'YTickLabel', {})
         tick_str            = cell(1, 11);
         switch ii
             case 1
@@ -1387,10 +1408,10 @@ if plotting
         end
         tick_str{1}         = ['<' tick_str{1}];
         tick_str{end}       = ['>' tick_str{end}];
-        colorbar('fontsize', 20, 'location', 'eastoutside', 'limits', [4 14], 'ytick', 4:14, 'ticklength', 0.021, 'fontweight', 'bold', 'yticklabel', tick_str)
-        title(titles{ii}, 'fontsize', 22, 'fontweight', 'bold', 'color', 'k', 'horizontalalignment', 'center')
+        colorbar('FontSize', 20, 'Location', 'eastoutside', 'Limits', [4 14], 'YTick', 4:14, 'TickLength', 0.021, 'FontWeight', 'bold', 'YTickLabel', tick_str)
+        title(titles{ii}, 'FontSize', 22, 'FontWeight', 'bold', 'Color', 'k', 'HorizontalAlignment', 'center')
     end
-    subplot('position', [0.70 0.2 0.30 0.6])
+    subplot('Position', [0.70 0.2 0.30 0.6])
     hold on
     range_tmp               = linspace(0, 0.5, 11);
     p                       = imagesc('xdata', -2000:100:2000, 'ydata', -150:10:150, 'cdata', (14 + discretize(model_change_bin, [-Inf range_tmp(2:(end - 1)) Inf])));
@@ -1403,12 +1424,12 @@ if plotting
         tick_str{ii}        = num2str(range_tmp(ii));
     end
     tick_str{end}           = ['>' tick_str{end}];
-    colorbar('fontsize', 20, 'location', 'southoutside', 'limits', [15 25], 'ytick', 15:25, 'ticklength', 0.04, 'fontweight', 'bold', 'yticklabel', tick_str)
-    set(gca, 'fontsize', 20, 'fontweight', 'bold', 'layer', 'top')
+    colorbar('FontSize', 20, 'Location', 'southoutside', 'Limits', [15 25], 'YTick', 15:25, 'TickLength', 0.04, 'FontWeight', 'bold', 'YTickLabel', tick_str)
+    set(gca, 'FontSize', 20, 'FontWeight', 'bold', 'Layer', 'top')
     xlabel('Change in thickness (m)')
     ylabel('Change in agreement on thawed bed (%)')
-    title('(c)', 'fontsize', 22, 'fontweight', 'bold')
-    text(-1400, -265, 'Fraction of grid cells (%)', 'fontsize', 22, 'fontweight', 'bold')
+    title('(c)', 'FontSize', 22, 'FontWeight', 'bold')
+    text(-1400, -265, 'Fraction of grid cells (%)', 'FontSize', 22, 'FontWeight', 'bold')
     box on
     grid on
         
